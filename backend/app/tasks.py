@@ -3,12 +3,13 @@ from app.core.database import async_session
 from app.models.voto import Voto
 from app.services.captcha_service import CaptchaService
 
+
 @celery_app.task
 async def registrar_voto_task(voto_data: dict, ip_address: str, user_agent: str):
     # Verifica o captcha
     captcha_service = CaptchaService()
     await captcha_service.verify_captcha(voto_data["captcha_token"])
-    
+
     # Registra o voto no banco
     async with async_session() as db:
         try:

@@ -33,6 +33,11 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+exclude = [
+    "alembic/**/*",
+    "**/alembic/**/*",
+]
+
 
 [tool.ruff.lint]
 select = [

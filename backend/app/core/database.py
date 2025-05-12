@@ -1,9 +1,10 @@
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from fastapi import Depends
+
 from app.core.config import get_settings
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 # Initialize settings
 settings = get_settings()
@@ -42,5 +43,5 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.rollback()
             raise
         finally:
-            await session.close() 
+            await session.close()
 

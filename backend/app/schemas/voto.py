@@ -1,11 +1,11 @@
-from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+
+from pydantic import BaseModel
 
 
 class VotoBase(BaseModel):
     participante_id: int
-    captcha_token: str  
+    captcha_token: str
 
 
 class VotoCreate(VotoBase):
@@ -15,7 +15,7 @@ class VotoCreate(VotoBase):
 class VotoInDB(VotoBase):
     id: int
     ip_address: str
-    user_agent: Optional[str] = None
+    user_agent: str | None = None
     created_at: datetime
 
     class Config:

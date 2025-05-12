@@ -1,8 +1,14 @@
 import httpx
 from fastapi import HTTPException
+
 from app.core.config import get_settings
 
 settings = get_settings()
+
+
+class CaptchaError(Exception):
+    """Exceção personalizada para erros relacionados ao Captcha"""
+    pass
 
 
 class CaptchaService:
@@ -23,19 +29,16 @@ class CaptchaService:
                         "response": token
                     }
                 )
-                
+
                 result = response.json()
-                
+
                 if not result.get("success", False):
                     raise HTTPException(
                         status_code=400,
                         detail="Captcha inválido"
                     )
-                
+
                 return True
-                
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Erro ao verificar captcha: {str(e)}"
-            ) 
+
+        except Exception as err:
+            raise CaptchaError("Erro ao validar captcha") from err

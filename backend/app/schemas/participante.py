@@ -1,11 +1,12 @@
-from pydantic import BaseModel
-from datetime import datetime
-from typing import Optional
 import uuid
+from datetime import datetime
+
+from pydantic import BaseModel
+
 
 class ParticipanteBase(BaseModel):
     nome: str
-    foto_url: Optional[str] = None
+    foto_url: str | None = None
 
 
 class ParticipanteCreate(ParticipanteBase):
@@ -15,7 +16,7 @@ class ParticipanteCreate(ParticipanteBase):
 class ParticipanteInDB(ParticipanteBase):
     id: uuid.UUID
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -23,4 +24,4 @@ class ParticipanteInDB(ParticipanteBase):
 
 class ParticipanteResponse(ParticipanteInDB):
     total_votos: int = 0
-    percentual: float = 0.0 
+    percentual: float = 0.0

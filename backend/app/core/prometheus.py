@@ -41,12 +41,12 @@ def setup_prometheus(app):
     def custom_metrics(info: Info) -> None:
         # Métricas de tempo de resposta
         TEMPO_RESPOSTA.labels(endpoint=info.modified_handler).observe(info.modified_duration)
-        
+
         # Métricas de erros
         if info.modified_status >= 400:
             ERROS_TOTAL.labels(tipo_erro=str(info.modified_status)).inc()
 
     instrumentator.add(custom_metrics)
-    
+
     # Instrumenta a aplicação
-    instrumentator.instrument(app).expose(app) 
+    instrumentator.instrument(app).expose(app)
