@@ -1,5 +1,5 @@
 from functools import lru_cache
-
+import os
 from pydantic_settings import BaseSettings
 
 
@@ -7,9 +7,10 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Sistema de Votação"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
+    ENVIRONMENT: str = "development"
 
     # Configurações do PostgreSQL
-    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_SERVER: str = "db"
     POSTGRES_USER: str = "user"
     POSTGRES_PASSWORD: str = "password"
     POSTGRES_DB: str = "votacao"
@@ -21,8 +22,8 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
 
     # Configurações do reCAPTCHA
-    RECAPTCHA_SITE_KEY: str = ""
-    RECAPTCHA_SECRET_KEY: str = ""
+    RECAPTCHA_SITE_KEY: str = os.getenv("RECAPTCHA_SITE_KEY")
+    RECAPTCHA_SECRET_KEY: str = os.getenv("RECAPTCHA_SECRET_KEY")
 
     # Configurações de Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60

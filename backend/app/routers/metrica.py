@@ -1,17 +1,13 @@
-
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
 from app.services.voto_service import VotoService
+from app.core.dependencies import get_voto_service
 
 router = APIRouter()
 
 @router.get("/metricas", response_model=dict)
 async def get_metricas(
-    db: Session = Depends()
+    service: VotoService = Depends(get_voto_service)
 ) -> dict:
-    """
-    Retorna métricas gerais da votação.
-    """
-    voto_service = VotoService(db)
-    return await voto_service.get_metricas()
+
+    return await service.get_estatisticas()
+

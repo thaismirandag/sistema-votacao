@@ -1,27 +1,23 @@
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
 from app.core.config import get_settings
 
-# Initialize settings
 settings = get_settings()
 
-
-# Base declaration
 class Base(DeclarativeBase):
     pass
 
-# Configuração do engine com pool de conexões
+# Atualiza a URL do banco para usar o driver asyncpg
+database_url = settings.SQLALCHEMY_DATABASE_URI.replace('postgresql://', 'postgresql+asyncpg://')
+
 engine = create_async_engine(
-    settings.SQLALCHEMY_DATABASE_URI.replace("postgresql://", "postgresql+asyncpg://"),
-    echo=True,
+    database_url,
+    echo=False,
 )
 
-# Configuração da sessão assíncrona
-async_session = sessionmaker(
+async_session = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
@@ -29,19 +25,9 @@ async_session = sessionmaker(
     autoflush=False,
 )
 
-@asynccontextmanager
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Dependency para obter uma sessão do banco de dados.
-    Garante que a sessão seja fechada após o uso.
-    """
+async def get_db() -> AsyncSession:
     async with async_session() as session:
         try:
             yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
         finally:
             await session.close()
-

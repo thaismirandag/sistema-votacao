@@ -1,4 +1,4 @@
-from prometheus_client import Counter, Histogram, generate_latest
+from prometheus_client import Counter, Histogram, Gauge, generate_latest
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from prometheus_fastapi_instrumentator.metrics import Info
 from fastapi import Response
@@ -22,6 +22,17 @@ ERROS_TOTAL = Counter(
     ["tipo_erro"]
 )
 
+VOTOS_REDIS = Gauge(
+    "votos_redis",
+    "Total de votos armazenados no Redis por participante",
+    ["participante_id"]
+)
+
+VOTOS_POR_HORA = Gauge(
+    "votos_por_hora",
+    "Votos registrados por hora (últimas 24h)",
+    ["hora"]
+)
 
 def setup_prometheus(app):
     instrumentator = Instrumentator(

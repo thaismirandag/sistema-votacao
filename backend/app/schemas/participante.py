@@ -1,12 +1,12 @@
-import uuid
 from datetime import datetime
-
-from pydantic import BaseModel
+from uuid import UUID
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
 
 
 class ParticipanteBase(BaseModel):
     nome: str
-    foto_url: str | None = None
+    foto_url: Optional[str] = None
 
 
 class ParticipanteCreate(ParticipanteBase):
@@ -14,14 +14,14 @@ class ParticipanteCreate(ParticipanteBase):
 
 
 class ParticipanteInDB(ParticipanteBase):
-    id: uuid.UUID
+    id: UUID
     created_at: datetime
-    updated_at: datetime | None = None
+    updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ParticipanteResponse(ParticipanteInDB):
     total_votos: int = 0
     percentual: float = 0.0
+

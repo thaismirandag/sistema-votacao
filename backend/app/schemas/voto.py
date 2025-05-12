@@ -1,10 +1,11 @@
 from datetime import datetime
-
-from pydantic import BaseModel
+from uuid import UUID
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
 
 
 class VotoBase(BaseModel):
-    participante_id: int
+    participante_id: str
     captcha_token: str
 
 
@@ -12,17 +13,20 @@ class VotoCreate(VotoBase):
     pass
 
 
+class VotoTesteCreate(BaseModel):
+    participante_id: str
+
+
 class VotoInDB(VotoBase):
-    id: int
+    id: UUID
     ip_address: str
-    user_agent: str | None = None
+    user_agent: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VotoResponse(BaseModel):
-    participante_id: int
+    participante_id: str
     total_votos: int
     percentual: float

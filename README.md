@@ -1,81 +1,133 @@
-# Sistema de Votação
+# Sistema de Votação 
 
-Sistema de votação utilizando FastAPI, PostgreSQL, Redis e Celery.
+Sistema de votação desenvolvido com React/TypeScript no frontend e Python/FastAPI no backend.
 
-## Requisitos
+## 📋 Documentação do Projeto
+
+### Arquitetura
+
+O sistema é composto por três componentes principais:
+
+1. **Frontend (React/TypeScript)**
+   - Interface web responsiva
+   - Integração com reCAPTCHA
+   - Exibição de resultados em tempo real
+   - Estilização com styled-components
+
+2. **Backend (Python/FastAPI)**
+   - API REST
+   - Validação de votos
+   - Armazenamento em banco de dados
+   - Rate limiting e proteção contra bots
+
+3. **Monitoramento**
+   - Prometheus para coleta de métricas
+   - Grafana para visualização
+   - Alertas configurados
+
+### APIs
+
+#### Endpoints Disponíveis
+
+1. **GET /participantes**
+   - Retorna lista de participantes no paredão
+   - Resposta: `{ id: string, nome: string, foto_url: string, total_votos: number, percentual: number }[]`
+
+2. **POST /votos**
+   - Registra um novo voto
+   - Body: `{ participante_id: string, captcha_token: string }`
+   - Resposta: Status 200 em caso de sucesso
+
+3. **GET /estatisticas**
+   - Retorna estatísticas gerais
+   - Resposta: `{ total_votos: number, votos_por_participante: { [id: string]: number }, votos_por_hora: { [hora: string]: number } }`
+
+### Métricas
+
+O sistema coleta as seguintes métricas em tempo real:
+
+- Votos por segundo
+- Taxa de sucesso/erro
+- Tempo de resposta da API
+- Uso de CPU/Memória
+- Número de conexões ativas
+
+## 🚀 Como Executar Localmente
+
+### Pré-requisitos
 
 - Docker
 - Docker Compose
-- Git
+- Node.js 16+
+- Python 3.8+
 
-## Estrutura do Projeto
-
-```
-sistema-votacao/
-├── backend/          # API FastAPI
-├── frontend/         # Interface do usuário
-├── architecture/     # Diagramas da arquitetura
-└── docker-compose.yml
-```
-
-## Configuração do Ambiente
+### Passos para Execução
 
 1. Clone o repositório:
 ```bash
-git clone <url-do-repositorio>
+git clone https://github.com/seu-usuario/sistema-votacao.git
 cd sistema-votacao
 ```
 
 2. Configure as variáveis de ambiente:
 ```bash
-cp backend/.env.example backend/.env
+cp .env.example .env
+# Edite o arquivo .env com suas configurações
 ```
-Edite o arquivo `.env` com suas configurações.
 
-## Executando o Sistema
-
-1. Inicie os containers:
+3. Inicie os serviços:
 ```bash
 docker-compose up -d
 ```
 
-2. Execute as migrações do banco de dados:
-```bash
-docker-compose exec backend poetry run alembic upgrade head
-```
-
-3. Inicie o worker do Celery:
-```bash
-docker-compose exec backend poetry run celery -A app.core.celery_worker.celery_app worker --loglevel=info -Q votos -n votos.worker@%h
-```
-
-## Acessando o Sistema
-
+4. Acesse a aplicação:
 - Frontend: http://localhost:3000
 - API: http://localhost:8000
-- Documentação da API: http://localhost:8000/docs
-- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3001
 
-## Monitoramento
 
-O sistema inclui monitoramento com Prometheus e métricas personalizadas:
-- Taxa de votos por minuto
-- Tempo de processamento
-- Status do worker
-- Cache hits/misses
+## 📊 Plano de Trabalho
 
-## Desenvolvimento
+### Previsto
+- [x] Desenvolvimento do frontend
+- [x] Desenvolvimento do backend
+- [x] Implementação do reCAPTCHA
+- [x] Configuração do banco de dados
+- [x] Testes de carga
+- [ ] Implementação de métricas
+- [ ] Configuração de CI/CD
+- [ ] Documentação completa
 
-### Backend
+### Realizado
+- [x] Sistema básico de votação
+- [x] Interface responsiva
+- [x] Proteção contra bots
+- [x] Armazenamento de votos
+- [x] Testes de performance iniciais
 
-O backend é desenvolvido em Python usando:
-- FastAPI para a API
-- PostgreSQL para persistência
-- Redis para cache e rate limiting
-- Celery para processamento assíncrono
-- Alembic para migrações
+## 🛠️ Tecnologias Utilizadas
 
-### Frontend
+- Frontend: React, TypeScript, styled-components
+- Backend: Python, FastAPI
+- Banco de Dados: PostgreSQL
+- Cache: Redis
+- Monitoramento: Prometheus, Grafana
+- Containerização: Docker
 
-O frontend é desenvolvido em React e se comunica com o backend através da API REST.
+## 🧠 Como funciona
+
+- Os usuários acessam a interface e enviam votos através da API.
+- O voto é validado com reCAPTCHA e armazenado temporariamente no Redis.
+- O Celery processa os votos em segundo plano e grava no banco de dados (postgres).
+- As métricas são expostas via Prometheus e visualizadas em dashboards Grafana.
+
+## 📦 Estrutura do Projeto
+- `architecture/`: Arquitetura do projeto
+- `frontend/`: Código do frontend
+- `backend/`: Código do backend
+- `prometheus/`: Configuração do Prometheus
+- `grafana/`: Configuração do Grafana
+- `README.md`: Documentação do projeto
+- `docker-compose.yml`: Configuração do Docker Compose
+
 

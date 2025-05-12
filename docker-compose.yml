@@ -10,8 +10,30 @@ services:
       - db
       - redis
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/votacao
+      - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/votacao
+      - REDIS_URL=redis://redis:6379/0
       - POETRY_VIRTUALENVS_CREATE=false
+      - GUNICORN_CMD_ARGS=--workers=9 --bind=0.0.0.0:8000
+      - ENVIRONMENT=development
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    networks:
+      - sistema_votacao_net
+
+  celery:
+    build: ./backend
+    container_name: sistema_votacao_celery
+    command: celery -A app.core.celery_worker.celery_app worker --loglevel=info -c 16
+    depends_on:
+      - db
+      - redis
+    environment:
+      - POETRY_VIRTUALENVS_CREATE=false
+    env_file:
+      - ./backend/.env
     volumes:
       - ./backend:/app
     working_dir: /app
@@ -21,10 +43,14 @@ services:
   frontend:
     image: nginx:alpine
     container_name: sistema_votacao_frontend
+    ports:
+      - "3000:80"
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
-    ports:
-      - "8080:80"
+    depends_on:
+      - backend
+    env_file:
+      - ./frontend/.env
     networks:
       - sistema_votacao_net
 
@@ -32,32 +58,45 @@ services:
     image: postgres:15
     container_name: sistema_votacao_db
     restart: always
-    environment:
-      POSTGRES_DB: votacao
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    volumes:
-      - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=votacao
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - sistema_votacao_net
 
   redis:
-    image: redis:alpine
+    image: redis:7
     container_name: sistema_votacao_redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     networks:
       - sistema_votacao_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:latest
     container_name: sistema_votacao_prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
     networks:
       - sistema_votacao_net
 
@@ -65,29 +104,56 @@ services:
     image: grafana/grafana:latest
     container_name: sistema_votacao_grafana
     restart: always
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
-      - GF_PATHS_DATA=/var/lib/grafana
-      - GF_PATHS_LOGS=/var/log/grafana
-      - GF_PATHS_PLUGINS=/var/lib/grafana/plugins
-      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - grafana_logs:/var/log/grafana
-    ports:
-      - "3000:3000"
-    networks:
-      - sistema_votacao_net
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
     depends_on:
       - prometheus
+    networks:
+      - sistema_votacao_net
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: sistema_votacao_node_exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|run/user)($$|/)'
+    networks:
+      - sistema_votacao_net
+  
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - sistema_votacao_net
 
 volumes:
-  pgdata:
+  postgres_data:
+  redis_data:
+  prometheus_data:
   grafana_data:
-  grafana_logs:
 
 networks:
   sistema_votacao_net:
