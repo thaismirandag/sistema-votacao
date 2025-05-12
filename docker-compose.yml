@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: sistema_votacao_backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/votacao
+      - POETRY_VIRTUALENVS_CREATE=false
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    networks:
+      - sistema_votacao_net
+
+  frontend:
+    image: nginx:alpine
+    container_name: sistema_votacao_frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    networks:
+      - sistema_votacao_net
+
+  db:
+    image: postgres:15
+    container_name: sistema_votacao_db
+    restart: always
+    environment:
+      POSTGRES_DB: votacao
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - sistema_votacao_net
+
+  redis:
+    image: redis:alpine
+    container_name: sistema_votacao_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - sistema_votacao_net
+
+  prometheus:
+    image: prom/prometheus
+    container_name: sistema_votacao_prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - sistema_votacao_net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sistema_votacao_grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
+      - GF_PATHS_DATA=/var/lib/grafana
+      - GF_PATHS_LOGS=/var/log/grafana
+      - GF_PATHS_PLUGINS=/var/lib/grafana/plugins
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - grafana_logs:/var/log/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - sistema_votacao_net
+    depends_on:
+      - prometheus
+
+volumes:
+  pgdata:
+  grafana_data:
+  grafana_logs:
+
+networks:
+  sistema_votacao_net:
+    driver: bridge

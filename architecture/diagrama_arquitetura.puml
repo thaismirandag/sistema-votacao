@@ -1,0 +1,74 @@
+@startuml
+!theme plain
+skinparam backgroundColor white
+skinparam handwritten false
+
+' Definindo cores
+!define FRONTEND_COLOR #FFFFFF
+!define BACKEND_COLOR #ADD8E6
+!define DB_COLOR #90EE90
+!define REDIS_COLOR #FFE4B5
+!define PROMETHEUS_COLOR #D3D3D3
+
+title Arquitetura do Sistema de Votação
+
+' Frontend
+skinparam component {
+    BackgroundColor FRONTEND_COLOR
+}
+[Interface Web] as Frontend
+
+' Backend
+skinparam component {
+    BackgroundColor BACKEND_COLOR
+}
+[FastAPI] as API
+[Celery Worker] as Worker
+[Alembic] as Alembic
+
+' Database
+skinparam database {
+    BackgroundColor DB_COLOR
+}
+database "PostgreSQL" {
+    [Database] as DB
+}
+
+' Redis
+skinparam queue {
+    BackgroundColor REDIS_COLOR
+}
+queue "Redis" as RedisQueue {
+    [Message Broker] as RedisBroker
+    [Cache] as RedisCache
+}
+
+' Prometheus
+skinparam cloud {
+    BackgroundColor PROMETHEUS_COLOR
+}
+cloud "Prometheus" as PrometheusCloud {
+    [Metrics Collector] as PrometheusMetrics
+}
+
+' Relacionamentos
+Frontend --> API : HTTP/HTTPS
+API --> DB : Consultas
+API --> RedisCache : Cache
+API --> Worker : Tarefas Assíncronas
+Worker --> RedisBroker : Consome Tarefas
+Worker --> DB : Atualizações
+Alembic --> DB : Migrações
+API --> PrometheusMetrics : Métricas
+Worker --> PrometheusMetrics : Métricas
+
+legend right
+  |Cor|Descrição|
+  |<#FFFFFF>|Frontend - Interface do usuário|
+  |<#ADD8E6>|Backend - Lógica de negócio|
+  |<#90EE90>|Banco de Dados - Persistência|
+  |<#FFE4B5>|Cache e Mensageria|
+  |<#D3D3D3>|Monitoramento|
+endlegend
+
+@enduml 
