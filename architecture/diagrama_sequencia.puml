@@ -1,0 +1,59 @@
+@startuml
+!theme plain
+skinparam backgroundColor white
+skinparam handwritten false
+
+title Fluxo de Votação
+
+actor Usuario
+participant "Frontend" as Frontend
+participant "FastAPI" as API
+participant "Celery Worker" as Worker
+participant "Redis" as Redis
+participant "PostgreSQL" as DB
+participant "Prometheus" as Prometheus
+
+== Início da Votação ==
+
+Usuario -> Frontend: Acessa página de votação
+Frontend -> API: GET /api/v1/votacao
+API -> DB: Consulta votação atual
+DB --> API: Retorna dados da votação
+API --> Frontend: Retorna dados formatados
+Frontend --> Usuario: Exibe opções de voto
+
+== Processo de Voto ==
+
+Usuario -> Frontend: Seleciona opção e vota
+Frontend -> API: POST /api/v1/votacao/voto
+API -> Prometheus: Registra métrica de voto
+API -> Redis: Verifica rate limit
+Redis --> API: Confirma limite
+API -> Worker: Envia tarefa de processamento
+API --> Frontend: Retorna confirmação
+Frontend --> Usuario: Exibe mensagem de sucesso
+
+== Processamento Assíncrono ==
+
+Worker -> Redis: Consome tarefa
+Worker -> DB: Atualiza contagem de votos
+DB --> Worker: Confirma atualização
+Worker -> Prometheus: Registra métrica de processamento
+Worker -> Redis: Atualiza cache de resultados
+
+== Consulta de Resultados ==
+
+Usuario -> Frontend: Solicita resultados
+Frontend -> API: GET /api/v1/votacao/resultados
+API -> Redis: Consulta cache
+alt Cache Hit
+    Redis --> API: Retorna resultados
+else Cache Miss
+    API -> DB: Consulta resultados
+    DB --> API: Retorna dados
+    API -> Redis: Atualiza cache
+end
+API --> Frontend: Retorna resultados
+Frontend --> Usuario: Exibe resultados atualizados
+
+@enduml
