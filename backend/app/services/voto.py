@@ -21,16 +21,13 @@ class VotoService:
         )
 
     async def registrar_voto(self, voto: VotoCreate, ip_address: str, user_agent: str) -> Voto:
-        # Registra o voto no Redis para contagem em tempo real
         hora_atual = datetime.now().strftime("%Y-%m-%d %H:00:00")
         chave_hora = f"votos:hora:{hora_atual}"
         chave_participante = f"votos:participante:{voto.participante_id}"
 
-        # Incrementa contadores no Redis
         self.redis.incr(chave_hora)
         self.redis.incr(chave_participante)
 
-        # Registra o voto no banco de dados
         db_voto = Voto(
             participante_id=voto.participante_id,
             ip_address=ip_address,
@@ -43,9 +40,8 @@ class VotoService:
         return db_voto
 
     async def get_estatisticas(self) -> dict:
-        # Obtém estatísticas do Redis
         total_votos = sum(int(self.redis.get(f"votos:participante:{pid}") or 0)
-                         for pid in range(1, 3))  # Assumindo 2 participantes
+                         for pid in range(1, 3))
 
         estatisticas = {
             "total_geral": total_votos,
@@ -53,8 +49,7 @@ class VotoService:
             "votos_por_hora": {}
         }
 
-        # Estatísticas por participante
-        for pid in range(1, 3):  # Assumindo 2 participantes
+        for pid in range(1, 3):
             votos = int(self.redis.get(f"votos:participante:{pid}") or 0)
             percentual = (votos / total_votos * 100) if total_votos > 0 else 0
             estatisticas["participantes"][pid] = {
@@ -62,7 +57,6 @@ class VotoService:
                 "percentual": round(percentual, 2)
             }
 
-        # Votos por hora (últimas 24 horas)
         for i in range(24):
             hora = (datetime.now() - timedelta(hours=i)).strftime("%Y-%m-%d %H:00:00")
             votos_hora = int(self.redis.get(f"votos:hora:{hora}") or 0)

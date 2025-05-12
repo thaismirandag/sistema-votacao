@@ -7,7 +7,6 @@ settings = get_settings()
 
 
 class CaptchaError(Exception):
-    """Exceção personalizada para erros relacionados ao Captcha"""
     pass
 
 
@@ -17,9 +16,7 @@ class CaptchaService:
         self.secret_key = settings.RECAPTCHA_SECRET_KEY
 
     async def verify_captcha(self, token: str) -> bool:
-        """
-        Verifica se o token do reCAPTCHA v2 é válido
-        """
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(

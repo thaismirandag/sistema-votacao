@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "sistema-votacao-backend"
+name = "sistema-votacao"
 version = "0.1.0"
 description = ""
 authors = ["Thais Gomes <thaismrgs@gmail.com>"]
@@ -19,7 +19,7 @@ prometheus-client = "^0.20.0"
 asyncpg = "^0.30.0"
 celery = {extras = ["redis"], version = "^5.5.2"}
 prometheus-fastapi-instrumentator = "^6.1.0"
-
+loguru = "^0.7.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -37,7 +37,6 @@ exclude = [
     "alembic/**/*",
     "**/alembic/**/*",
 ]
-
 
 [tool.ruff.lint]
 select = [

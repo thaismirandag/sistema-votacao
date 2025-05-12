@@ -1,6 +1,7 @@
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, generate_latest
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
 from prometheus_fastapi_instrumentator.metrics import Info
+from fastapi import Response
 
 # Métricas personalizadas
 VOTOS_TOTAL = Counter(
@@ -28,25 +29,23 @@ def setup_prometheus(app):
         should_ignore_untemplated=True,
         should_respect_env_var=True,
         should_instrument_requests_inprogress=True,
-        excluded_handlers=["/metrics"],
         env_var_name="ENABLE_METRICS",
         inprogress_name="fastapi_inprogress",
         inprogress_labels=True,
     )
 
-    # Adiciona métricas padrão
     instrumentator.add(metrics.default())
 
-    # Adiciona métricas personalizadas
     def custom_metrics(info: Info) -> None:
-        # Métricas de tempo de resposta
         TEMPO_RESPOSTA.labels(endpoint=info.modified_handler).observe(info.modified_duration)
 
-        # Métricas de erros
         if info.modified_status >= 400:
             ERROS_TOTAL.labels(tipo_erro=str(info.modified_status)).inc()
 
     instrumentator.add(custom_metrics)
 
-    # Instrumenta a aplicação
-    instrumentator.instrument(app).expose(app)
+    instrumentator.instrument(app)
+
+    @app.get("/metrics")
+    async def metrics_endpoint():
+        return Response(generate_latest(), media_type="text/plain")
